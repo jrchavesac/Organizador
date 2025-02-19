@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado do Organizador de Dados de Concurso</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Resultado Organizado</h1>
+        <div style="text-align: center; margin-bottom: 10px;">
+            <a href="/generate_pdf" target="_blank">
+                <button title="Gerar PDF dos resultados">Gerar PDF</button>
+            </a>
+        </div>
+        <div class="search-group">
+            <label for="searchInput">Pesquisar por Nome:</label>
+            <input type="text" id="searchInput" oninput="searchByName()" placeholder="Digite o nome para buscar...">
+        </div>
+        <table border="1" id="resultTable">
+            <thead>
+                <tr>
+                    {% for column_name in column_names %}
+                        <th onclick="sortTable({{ loop.index0 }})">{{ column_name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in organized_data %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <footer class="footer">
+        <img src="{{ url_for('static', filename='minha_foto.jpg') }}" alt="Foto do Autor">
+        <p><b>Autor: Júnior Chaves</b></p>
+    </footer>
+
+    <script>
+        let sortDirections = [];
+        let nameColumnIndex = null;
+
+        window.onload = function() {
+            const tableHeaders = document.querySelectorAll('#resultTable th');
+            tableHeaders.forEach((header, index) => {
+                sortDirections[index] = true; // Inicialmente, definir ordenação crescente para todas as colunas
+
+                // Verificar se o nome da coluna inclui "nome" (caso insensível)
+                if (header.textContent.toLowerCase().includes('nome')) {
+                    nameColumnIndex = index; // Definir o índice da coluna do nome
+                }
+            });
+        };
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('resultTable');
+            const tbody = table.getElementsByTagName('tbody')[0];
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+
+            const sortedRows = rows.sort((a, b) => {
+                const textA = a.cells[columnIndex].textContent.trim();
+                const textB = b.cells[columnIndex].textContent.trim();
+
+                // Tentar converter para número
+                const numA = parseFloat(textA.replace(',', '.'));
+                const numB = parseFloat(textB.replace(',', '.'));
+
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    // Comparar como números
+                    return sortDirections[columnIndex] ? numA - numB : numB - numA;
+                } else {
+                    // Comparar como strings
+                    return sortDirections[columnIndex] ? textA.localeCompare(textB) : textB.localeCompare(textA);
+                }
+            });
+
+            sortDirections[columnIndex] = !sortDirections[columnIndex]; // Alternar a direção de ordenação
+
+            tbody.innerHTML = '';
+            sortedRows.forEach(row => tbody.appendChild(row));
+        }
+
+        function normalizeString(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ç/g, "c").replace(/Ç/g, "C");
+        }
+
+        function searchByName() {
+            const searchInput = normalizeString(document.getElementById('searchInput').value.toLowerCase());
+            const tableBody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+            const rows = tableBody.getElementsByTagName('tr');
+
+            for (let row of rows) {
+                if (nameColumnIndex !== null) {
+                    const nameCell = normalizeString(row.cells[nameColumnIndex].textContent.toLowerCase());
+                    if (nameCell.includes(searchInput)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
