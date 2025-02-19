@@ -13,7 +13,7 @@ config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html')  # Arquivo index.html na raiz
 
 @app.route('/organize', methods=['POST'])
 def organize():
@@ -25,11 +25,13 @@ def organize():
     fields_input = int(request.form['fieldsInput'])
     add_ranking = 'addRankingColumn' in request.form
     
+    # Definir nomes das colunas
     column_names = [request.form[f'columnName{i}'] or f'Campo {i}' for i in range(1, fields_input + 1)]
     
     if add_ranking:
         column_names.insert(0, 'Classificação')
 
+    # Processar dados dos candidatos
     candidates = data_input.split('/')
     
     organized_data = []
@@ -42,19 +44,20 @@ def organize():
         
         organized_data.append(data_array)
     
+    # Adicionar classificação se necessário
     if add_ranking:
         organized_data = sorted(organized_data, key=lambda x: float(x[2].replace(',', '.')), reverse=True)
         for rank, row in enumerate(organized_data, start=1):
             row.insert(0, rank)
     
-    return render_template('result.html', column_names=column_names, organized_data=organized_data)
+    return render_template('result.html', column_names=column_names, organized_data=organized_data)  # Arquivo result.html na raiz
 
 @app.route('/generate_pdf')
 def generate_pdf():
     global organized_data
     global column_names
     
-    html = render_template('pdf_template.html', column_names=column_names, organized_data=organized_data)
+    html = render_template('pdf_template.html', column_names=column_names, organized_data=organized_data)  # Arquivo pdf_template.html na raiz
     options = {
         'enable-local-file-access': None
     }
